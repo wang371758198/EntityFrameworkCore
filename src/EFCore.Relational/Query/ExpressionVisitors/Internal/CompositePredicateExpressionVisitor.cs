@@ -31,6 +31,7 @@ namespace Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal
         protected override Expression VisitExtension(Expression expression)
         {
             var selectExpression = expression as SelectExpression;
+            var joinExpression = expression as PredicateJoinExpressionBase;
 
             if (selectExpression?.Predicate != null)
             {
@@ -52,6 +53,10 @@ namespace Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal
                 }
 
                 selectExpression.Predicate = predicate;
+            }
+            else if (joinExpression?.Predicate != null)
+            {
+                joinExpression.Predicate = new EqualityPredicateInExpressionOptimizer().Visit(joinExpression.Predicate);
             }
 
             return base.VisitExtension(expression);
