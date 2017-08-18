@@ -25,6 +25,7 @@ using Remotion.Linq.Clauses;
 using Remotion.Linq.Clauses.Expressions;
 using Remotion.Linq.Clauses.ExpressionVisitors;
 using Remotion.Linq.Clauses.ResultOperators;
+using Remotion.Linq.Parsing;
 
 namespace Microsoft.EntityFrameworkCore.Query
 {
@@ -1411,7 +1412,7 @@ namespace Microsoft.EntityFrameworkCore.Query
 
             var predicate
                 = sqlTranslatingExpressionVisitor.Visit(
-                    Expression.Equal(joinClause.OuterKeySelector, joinClause.InnerKeySelector));
+                    BuildJoinPredicate(joinClause.OuterKeySelector, joinClause.InnerKeySelector));
 
             if (predicate == null)
             {
@@ -1521,7 +1522,7 @@ namespace Microsoft.EntityFrameworkCore.Query
 
             var predicate
                 = sqlTranslatingExpressionVisitor.Visit(
-                    Expression.Equal(joinClause.OuterKeySelector, joinClause.InnerKeySelector));
+                    BuildJoinPredicate(joinClause.OuterKeySelector, joinClause.InnerKeySelector));
 
             if (predicate == null)
             {
@@ -1537,7 +1538,7 @@ namespace Microsoft.EntityFrameworkCore.Query
 
                 predicate
                     = sqlTranslatingExpressionVisitor.Visit(
-                        Expression.Equal(joinClause.OuterKeySelector, joinClause.InnerKeySelector));
+                        BuildJoinPredicate(joinClause.OuterKeySelector, joinClause.InnerKeySelector));
             }
 
             QueriesBySource.Remove(joinClause);
@@ -1616,6 +1617,87 @@ namespace Microsoft.EntityFrameworkCore.Query
                     groupJoinMethodCallExpression.Arguments[4]);
 
             return true;
+        }
+
+        private Expression BuildJoinPredicate(Expression outerKeySelector, Expression innerKeySelector)
+        {
+            var discriminatorExtractor = new DiscriminatorExtractingExpressionVisitor(QueryCompilationContext.Model);
+            var newOuterKeySelector = discriminatorExtractor.Visit(outerKeySelector);
+            var newInnerKeySelector = discriminatorExtractor.Visit(innerKeySelector);
+            var result = Expression.Equal(newOuterKeySelector, newInnerKeySelector);
+
+            if (discriminatorExtractor.Discriminators.Any())
+            {
+                var discriminatorPredicateExpression = discriminatorExtractor.Discriminators.Values.Aggregate(
+                    result, 
+                    (c, n) => Expression.AndAlso(n, c));
+
+                result = Expression.Equal(
+                    discriminatorPredicateExpression,
+                    Expression.Constant(true));
+            }
+
+            return result;
+        }
+
+        private class DiscriminatorExtractingExpressionVisitor : RelinqExpressionVisitor
+        {
+            private readonly IModel _model;
+
+            public DiscriminatorExtractingExpressionVisitor(IModel model)
+            {
+                _model = model;
+            }
+
+            public Dictionary<IQuerySource, Expression> Discriminators { get; } = new Dictionary<IQuerySource, Expression>();
+
+            protected override Expression VisitConditional(ConditionalExpression conditionalExpression)
+            {
+                if (conditionalExpression.Test is BinaryExpression testBinary
+                    && conditionalExpression.IfFalse.IsNullConstantExpression() 
+                    && conditionalExpression.IfTrue is MethodCallExpression ifTrueMethodCall
+                    && ifTrueMethodCall.IsEFProperty()
+                    && IsDicriminatorPredicate(testBinary, out var testDiscriminatorQsre))
+                {
+                    Discriminators[testDiscriminatorQsre.ReferencedQuerySource] = testBinary;
+
+                    return conditionalExpression.IfTrue;
+                }
+
+                return base.VisitConditional(conditionalExpression);
+            }
+
+            private bool IsDicriminatorPredicate(BinaryExpression expression, out QuerySourceReferenceExpression qsre)
+            {
+                qsre = null;
+                if (expression.NodeType == ExpressionType.Equal
+                    && expression.Left is MethodCallExpression testBinaryMethodCall
+                    && testBinaryMethodCall.IsEFProperty()
+                    && testBinaryMethodCall.Arguments[0] is QuerySourceReferenceExpression testBinaryMethodCallQsre)
+                {
+                    var declaringEntityType = _model.FindEntityType(testBinaryMethodCallQsre.Type);
+                    if (declaringEntityType != null
+                        && declaringEntityType.Relational().DiscriminatorProperty.Name == (string)((ConstantExpression)testBinaryMethodCall.Arguments[1]).Value)
+                    {
+                        qsre = testBinaryMethodCallQsre;
+
+                        return true;
+                    }
+                }
+                else if (expression.NodeType == ExpressionType.OrElse
+                    && expression.Left is BinaryExpression binaryLeft
+                    && expression.Right is BinaryExpression binaryRight
+                    && IsDicriminatorPredicate(binaryLeft, out var leftDiscriminatorQsre)
+                    && IsDicriminatorPredicate(binaryRight, out var rightDiscriminatorQsre)
+                    && leftDiscriminatorQsre.ReferencedQuerySource == rightDiscriminatorQsre.ReferencedQuerySource)
+                {
+                    qsre = leftDiscriminatorQsre;
+
+                    return true;
+                }
+
+                return false;
+            }
         }
 
         private bool TryFlattenGroupJoinDefaultIfEmpty(
