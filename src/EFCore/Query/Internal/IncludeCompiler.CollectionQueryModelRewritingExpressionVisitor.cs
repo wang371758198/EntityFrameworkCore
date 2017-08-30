@@ -113,8 +113,15 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                         QueryModel = queryModel;
                     }
                 }
-            }
 
+                public override void VisitAdditionalFromClause(AdditionalFromClause fromClause, QueryModel queryModel, int index)
+                {
+                    if (fromClause == _querySource)
+                    {
+                        QueryModel = queryModel;
+                    }
+                }
+            }
 
             private void Rewrite(QueryModel collectionQueryModel, INavigation navigation)
             {
@@ -134,13 +141,10 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
 
                 var parentQuerySource = parentQuerySourceReferenceExpression.ReferencedQuerySource;
 
-
-
                 var qmFinder = new QueryModelFindingVisitor(parentQuerySourceReferenceExpression.ReferencedQuerySource);
                 qmFinder.VisitQueryModel(_parentQueryModel);
+
                 var realParentQueryModel = qmFinder.QueryModel ?? _parentQueryModel;
-
-
 
                 BuildParentOrderings(
                     realParentQueryModel,
@@ -206,7 +210,7 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                     lastResultOperator);
 
                 // MLG haxxx
-                IncludeCompiler.ApplyParentOrderings(realParentQueryModel, ParentOrderings);
+                //IncludeCompiler.ApplyParentOrderings(realParentQueryModel, ParentOrderings);
 
                 LiftOrderBy(
                     clonedParentQuerySource,
