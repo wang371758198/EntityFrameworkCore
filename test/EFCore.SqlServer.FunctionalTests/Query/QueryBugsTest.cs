@@ -2287,6 +2287,114 @@ ORDER BY [t].[Id]");
 
         #endregion
 
+        #region Bug9551
+
+        [Fact]
+        public virtual void Foo()
+        {
+            using (var db = new MyContext9551())
+            {
+                // Recreate database
+                db.Database.EnsureDeleted();
+                db.Database.EnsureCreated();
+
+                var p11 = new Post9551();
+                var p12 = new Post9551();
+                var p13 = new Post9551();
+                var p21 = new Post9551();
+                var p22 = new Post9551();
+                var p23 = new Post9551();
+
+                var b1 = new Blog9551
+                {
+                    Posts = new List<Post9551>
+                    {
+                        p11, p12, p13
+                    },
+                    Name = "Foo"
+                };
+
+                var b2 = new Blog9551
+                {
+                    Posts = new List<Post9551>
+                    {
+                        p21, p22, p23
+                    },
+                    Name = "Foo"
+                };
+
+                db.Posts.AddRange(p11, p12, p13, p21, p22, p23);
+                db.Blogs.AddRange(b1, b2);
+                db.SaveChanges();
+            }
+
+            using (var db = new MyContext9551())
+            {
+
+                //var foo = db.Posts.AsNoTracking().Include(p => p.Blog).ToList();
+
+                //                var bar = db.Blogs.Include(b => b.Posts).ToList();
+
+                //var query = db.Set<Post9551>()
+                //    .AsNoTracking()
+                //    .Include(p => p.Blog)
+                //    .GroupBy(p => EF.Property<int?>(p, "BlogId"))
+
+                //    //.ToList()
+
+                //    .Select(g => g.OrderBy(e => e.Id).FirstOrDefault())
+                //    .ToList();
+
+
+                var query2 = db.Set<Blog9551>()
+                    //.AsNoTracking()
+                    .Include(b => b.Posts)
+                    .GroupBy(b => b.Id)
+
+                    //.ToList()
+
+                    .Select(g => g.OrderBy(e => e.Name).FirstOrDefault())
+                    .ToList();
+
+            }
+
+            Console.WriteLine("Program finished.");
+        }
+
+        public class MyContext9551 : DbContext
+        {
+            // Declare DBSets
+            public DbSet<Blog9551> Blogs { get; set; }
+            public DbSet<Post9551> Posts { get; set; }
+
+            protected override void OnModelCreating(ModelBuilder modelBuilder)
+            {
+                modelBuilder.Entity<Blog9551>().HasMany(b => b.Posts).WithOne(p => p.Blog).HasForeignKey("BlogId");
+                base.OnModelCreating(modelBuilder);
+            }
+
+            protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+            {
+                optionsBuilder.UseSqlServer(@"Server=.;Database=Repro9551;Trusted_Connection=True;Connect Timeout=5;ConnectRetryCount=0");
+            }
+        }
+
+        public class Blog9551
+        {
+            public int Id { get; set; }
+
+            public string Name { get; set; }
+            public List<Post9551> Posts { get; set; }
+        }
+
+        public class Post9551
+        {
+            public int Id { get; set; }
+            public Blog9551 Blog { get; set; }
+        }
+
+        #endregion
+
         private DbContextOptions _options;
 
         private SqlServerTestStore CreateTestStore<TContext>(
