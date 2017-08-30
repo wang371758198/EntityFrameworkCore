@@ -17,6 +17,7 @@ using Remotion.Linq.Clauses.Expressions;
 using Remotion.Linq.Clauses.ExpressionVisitors;
 using Remotion.Linq.Clauses.ResultOperators;
 using Remotion.Linq.Parsing;
+using Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal;
 
 namespace Microsoft.EntityFrameworkCore.Query.Internal
 {
@@ -86,6 +87,35 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                 return base.VisitMethodCall(methodCallExpression);
             }
 
+
+            private class QueryModelFindingVisitor : QueryModelVisitorBase
+            {
+                private IQuerySource _querySource;
+
+                public QueryModelFindingVisitor(IQuerySource querySource)
+                {
+                    _querySource = querySource;
+                }
+
+                public QueryModel QueryModel { get; private set; }
+
+                public override void VisitQueryModel(QueryModel queryModel)
+                {
+                    queryModel.TransformExpressions(new TransformingQueryModelExpressionVisitor<QueryModelFindingVisitor>(this).Visit);
+
+                    base.VisitQueryModel(queryModel);
+                }
+
+                public override void VisitMainFromClause(MainFromClause fromClause, QueryModel queryModel)
+                {
+                    if (fromClause == _querySource)
+                    {
+                        QueryModel = queryModel;
+                    }
+                }
+            }
+
+
             private void Rewrite(QueryModel collectionQueryModel, INavigation navigation)
             {
                 var querySourceReferenceFindingExpressionTreeVisitor
@@ -104,14 +134,27 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
 
                 var parentQuerySource = parentQuerySourceReferenceExpression.ReferencedQuerySource;
 
+
+
+                var qmFinder = new QueryModelFindingVisitor(parentQuerySourceReferenceExpression.ReferencedQuerySource);
+                qmFinder.VisitQueryModel(_parentQueryModel);
+                var realParentQueryModel = qmFinder.QueryModel ?? _parentQueryModel;
+
+
+
                 BuildParentOrderings(
-                    _parentQueryModel,
+                    realParentQueryModel,
+                    //maumar
+                    //_parentQueryModel,
                     navigation,
                     parentQuerySourceReferenceExpression,
                     ParentOrderings);
 
                 var querySourceMapping = new QuerySourceMapping();
-                var clonedParentQueryModel = _parentQueryModel.Clone(querySourceMapping);
+
+                //maumar
+                //var clonedParentQueryModel = _parentQueryModel.Clone(querySourceMapping);
+                var clonedParentQueryModel = realParentQueryModel.Clone(querySourceMapping);
                 _queryCompilationContext.UpdateMapping(querySourceMapping);
 
                 _queryCompilationContext.CloneAnnotations(querySourceMapping, clonedParentQueryModel);
@@ -161,6 +204,9 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                     clonedParentQueryModel,
                     querySourceMapping,
                     lastResultOperator);
+
+                // MLG haxxx
+                IncludeCompiler.ApplyParentOrderings(realParentQueryModel, ParentOrderings);
 
                 LiftOrderBy(
                     clonedParentQuerySource,

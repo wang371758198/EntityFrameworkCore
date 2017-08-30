@@ -125,11 +125,6 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                         targetQuerySourceReferenceExpression,
                         includeExpression);
 
-
-                    //// MLG haxx - first apply to top level, and only on second pass go deep
-                    //ApplyIncludeExpressionsToQueryModel(
-                    //    queryModel, targetQuerySourceReferenceExpression, includeExpression);
-
                     includeApplyingVisitor.VisitQueryModel(queryModel);
                 }
             }
