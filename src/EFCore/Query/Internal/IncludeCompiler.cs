@@ -111,6 +111,33 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
             }
         }
 
+        private class QueryModelFindingVisitor : QueryModelVisitorBase
+        {
+            private IQuerySource _querySource;
+
+            public QueryModelFindingVisitor(IQuerySource querySource)
+            {
+                _querySource = querySource;
+            }
+
+            public QueryModel QueryModel { get; private set; }
+
+            public override void VisitQueryModel(QueryModel queryModel)
+            {
+                queryModel.TransformExpressions(new TransformingQueryModelExpressionVisitor<QueryModelFindingVisitor>(this).Visit);
+
+                base.VisitQueryModel(queryModel);
+            }
+
+            public override void VisitMainFromClause(MainFromClause fromClause, QueryModel queryModel)
+            {
+                if (fromClause == _querySource)
+                {
+                    QueryModel = queryModel;
+                }
+            }
+        }
+
         private IEnumerable<IncludeLoadTree> CreateIncludeLoadTrees(QueryModel queryModel)
         {
             var querySourceTracingExpressionVisitor
@@ -132,6 +159,22 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                     || navigationPath == null)
                 {
                     continue;
+                }
+
+                if (querySourceReferenceExpression.Type.IsGrouping())
+                {
+                    var qmFinder = new QueryModelFindingVisitor(includeResultOperator.QuerySource);
+                    qmFinder.VisitQueryModel(queryModel);
+
+                    if (qmFinder.QueryModel != null
+                        && qmFinder.QueryModel != queryModel)
+                    {
+                        querySourceReferenceExpression
+                            = querySourceTracingExpressionVisitor
+                                .FindResultQuerySourceReferenceExpression(
+                                    qmFinder.QueryModel.GetOutputExpression(),
+                                    includeResultOperator.QuerySource);
+                    }
                 }
 
                 var includeLoadTree
