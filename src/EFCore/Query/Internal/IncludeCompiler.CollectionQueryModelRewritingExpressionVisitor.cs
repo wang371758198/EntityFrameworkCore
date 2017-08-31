@@ -146,7 +146,7 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
 
                 var realParentQueryModel = qmFinder.QueryModel ?? _parentQueryModel;
 
-                ParentOrderings.Clear();
+                //ParentOrderings.Clear();
 
                 BuildParentOrderings(
                     realParentQueryModel,
