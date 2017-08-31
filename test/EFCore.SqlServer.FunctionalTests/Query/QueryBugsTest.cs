@@ -2335,15 +2335,15 @@ ORDER BY [t].[Id]");
 
                 //                var bar = db.Blogs.Include(b => b.Posts).ToList();
 
-                //var query = db.Set<Post9551>()
-                //    .AsNoTracking()
-                //    .Include(p => p.Blog)
-                //    .GroupBy(p => EF.Property<int?>(p, "BlogId"))
+                var query = db.Set<Post9551>()
+                    //.AsNoTracking()
+                    .Include(p => p.Blog)
+                    .GroupBy(p => EF.Property<int?>(p, "BlogId"))
 
-                //    //.ToList()
+                    //.ToList()
 
-                //    .Select(g => g.OrderBy(e => e.Id).FirstOrDefault())
-                //    .ToList();
+                    .Select(g => g.OrderBy(e => e.Id).FirstOrDefault())
+                    .ToList();
 
 
                 var query2 = db.Set<Blog9551>()
