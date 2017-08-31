@@ -1,7 +1,9 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using Microsoft.EntityFrameworkCore.TestUtilities.Xunit;
 using Microsoft.EntityFrameworkCore.Utilities;
+using System;
 
 namespace Microsoft.EntityFrameworkCore
 {
@@ -11,6 +13,13 @@ namespace Microsoft.EntityFrameworkCore
         public GraphUpdatesWithSequenceSqlServerTest(GraphUpdatesWithSequenceSqlServerFixture fixture)
             : base(fixture)
         {
+        }
+
+
+        [ConditionalFact]
+        public void Reparent_to_different_one_to_many_Foo()
+        {
+            base.Reparent_to_different_one_to_many(GraphUpdatesTestBase<SqlServerTestStore, GraphUpdatesWithSequenceSqlServerFixture>.ChangeMechanism.Dependent, false);
         }
 
         public class GraphUpdatesWithSequenceSqlServerFixture : GraphUpdatesSqlServerFixtureBase

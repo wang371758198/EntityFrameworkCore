@@ -146,6 +146,8 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
 
                 var realParentQueryModel = qmFinder.QueryModel ?? _parentQueryModel;
 
+                ParentOrderings.Clear();
+
                 BuildParentOrderings(
                     realParentQueryModel,
                     //maumar
@@ -210,7 +212,7 @@ namespace Microsoft.EntityFrameworkCore.Query.Internal
                     lastResultOperator);
 
                 // MLG haxxx
-                //IncludeCompiler.ApplyParentOrderings(realParentQueryModel, ParentOrderings);
+                IncludeCompiler.ApplyParentOrderings(realParentQueryModel, ParentOrderings);
 
                 LiftOrderBy(
                     clonedParentQuerySource,
