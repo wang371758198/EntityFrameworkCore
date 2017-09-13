@@ -272,19 +272,16 @@ namespace Microsoft.EntityFrameworkCore
             }
         }
 
-        [Fact]
-        public void Does_not_throw_or_retry_on_false_execution_failure()
-        {
-            Test_execution_failure(false);
-        }
-
-        [Fact]
-        public void Retries_on_true_execution_failure()
-        {
-            Test_execution_failure(true);
-        }
-
-        private void Test_execution_failure(bool realFailure)
+        [Theory]
+        [InlineData(false, false, false)]
+        [InlineData(true, false, false)]
+        [InlineData(false, true, false)]
+        [InlineData(true, true, false)]
+        [InlineData(false, false, true)]
+        [InlineData(true, false, true)]
+        [InlineData(false, true, true)]
+        [InlineData(true, true, true)]
+        public async Task Retries_only_on_true_execution_failure(bool realFailure, bool openConnection, bool async)
         {
             CleanContext();
 
@@ -294,21 +291,65 @@ namespace Microsoft.EntityFrameworkCore
 
                 connection.ExecutionFailures.Enqueue(new bool?[] { null, realFailure });
 
+                Assert.Equal(ConnectionState.Closed, context.Database.GetDbConnection().State);
+
+                if (openConnection)
+                {
+                    if (async)
+                    {
+                        await context.Database.OpenConnectionAsync();
+                    }
+                    else
+                    {
+                        context.Database.OpenConnection();
+                    }
+
+                    Assert.Equal(ConnectionState.Open, context.Database.GetDbConnection().State);
+                }
+
                 context.Products.Add(new Product());
                 context.Products.Add(new Product());
-                new TestSqlServerRetryingExecutionStrategy(context).ExecuteInTransaction(
-                    context,
-                    c => c.SaveChanges(acceptAllChangesOnSuccess: false),
-                    c =>
-                        {
-                            // This shouldn't be called if SaveChanges failed
-                            Assert.True(false);
-                            return false;
-                        });
+
+                if (async)
+                {
+                    await new TestSqlServerRetryingExecutionStrategy(context).ExecuteInTransactionAsync(
+                        context,
+                        (c, _) => c.SaveChangesAsync(acceptAllChangesOnSuccess: false),
+                        (c, _) =>
+                            {
+                                // This shouldn't be called if SaveChanges failed
+                                Assert.True(false);
+                                return Task.FromResult(false);
+                            });
+                }
+                else
+                {
+                    new TestSqlServerRetryingExecutionStrategy(context).ExecuteInTransaction(
+                        context,
+                        c => c.SaveChanges(acceptAllChangesOnSuccess: false),
+                        c =>
+                            {
+                                // This shouldn't be called if SaveChanges failed
+                                Assert.True(false);
+                                return false;
+                            });
+                }
                 context.ChangeTracker.AcceptAllChanges();
 
                 Assert.Equal(2, connection.OpenCount);
                 Assert.Equal(4, connection.ExecutionCount);
+
+                Assert.Equal(
+                    openConnection 
+                    ? ConnectionState.Open
+                    : ConnectionState.Closed, context.Database.GetDbConnection().State);
+
+                if (openConnection)
+                {
+                    context.Database.CloseConnection();
+                }
+
+                Assert.Equal(ConnectionState.Closed, context.Database.GetDbConnection().State);
             }
 
             using (var context = CreateContext())
@@ -392,6 +433,7 @@ namespace Microsoft.EntityFrameworkCore
             protected override IServiceCollection AddServices(IServiceCollection serviceCollection)
             {
                 return base.AddServices(serviceCollection)
+                    .AddSingleton<IRelationalTransactionFactory, TestRelationalTransactionFactory>()
                     .AddScoped<ISqlServerConnection, TestSqlServerConnection>()
                     .AddScoped<IRelationalCommandBuilderFactory, TestRelationalCommandBuilderFactory>();
             }
