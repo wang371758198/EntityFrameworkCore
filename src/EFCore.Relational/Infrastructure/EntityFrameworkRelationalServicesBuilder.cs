@@ -107,8 +107,7 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
         /// </summary>
         protected override ServiceCharacteristics GetServiceCharacteristics(Type serviceType)
         {
-            ServiceCharacteristics characteristics;
-            return RelationalServices.TryGetValue(serviceType, out characteristics)
+            return RelationalServices.TryGetValue(serviceType, out var characteristics)
                 ? characteristics
                 : base.GetServiceCharacteristics(serviceType);
         }
@@ -180,6 +179,7 @@ namespace Microsoft.EntityFrameworkCore.Infrastructure
                 .AddDependencySingleton<RelationalValueBufferFactoryDependencies>()
                 .AddDependencySingleton<RelationalProjectionExpressionVisitorDependencies>()
                 .AddDependencyScoped<RelationalConventionSetBuilderDependencies>()
+                .AddDependencyScoped<CommandBatchPreparerDependencies>()
                 .AddDependencyScoped<RelationalDatabaseCreatorDependencies>()
                 .AddDependencyScoped<HistoryRepositoryDependencies>()
                 .AddDependencyScoped<RelationalCompiledQueryCacheKeyGeneratorDependencies>()
