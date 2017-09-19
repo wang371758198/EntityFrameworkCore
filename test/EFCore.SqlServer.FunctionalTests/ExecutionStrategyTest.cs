@@ -340,7 +340,7 @@ namespace Microsoft.EntityFrameworkCore
                 Assert.Equal(4, connection.ExecutionCount);
 
                 Assert.Equal(
-                    openConnection 
+                    openConnection
                     ? ConnectionState.Open
                     : ConnectionState.Closed, context.Database.GetDbConnection().State);
 
@@ -355,6 +355,136 @@ namespace Microsoft.EntityFrameworkCore
             using (var context = CreateContext())
             {
                 Assert.Equal(2, context.Products.Count());
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Retries_query_on_execution_failure(bool async)
+        {
+            CleanContext();
+
+            using (var context = CreateContext())
+            {
+                context.Products.Add(new Product());
+                context.Products.Add(new Product());
+
+                context.SaveChanges();
+            }
+
+            using (var context = CreateContext())
+            {
+                var connection = (TestSqlServerConnection)context.GetService<ISqlServerConnection>();
+
+                connection.ExecutionFailures.Enqueue(new bool?[] { true });
+
+                Assert.Equal(ConnectionState.Closed, context.Database.GetDbConnection().State);
+
+
+                if (async)
+                {
+                    var list = await new TestSqlServerRetryingExecutionStrategy(context).ExecuteInTransactionAsync(
+                        context,
+                        (c, _) => context.Products.ToListAsync(),
+                        (c, _) =>
+                            {
+                                // This shouldn't be called if query failed
+                                Assert.True(false);
+                                return Task.FromResult(false);
+                            });
+
+                    Assert.Equal(2, list.Count);
+                }
+                else
+                {
+                    var list = new TestSqlServerRetryingExecutionStrategy(context).ExecuteInTransaction(
+                        context,
+                        c => context.Products.ToList(),
+                        c =>
+                            {
+                                // This shouldn't be called if query failed
+                                Assert.True(false);
+                                return false;
+                            });
+
+                    Assert.Equal(2, list.Count);
+                }
+
+                Assert.Equal(2, connection.OpenCount);
+                Assert.Equal(2, connection.ExecutionCount);
+
+                Assert.Equal(ConnectionState.Closed, context.Database.GetDbConnection().State);
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Retries_OpenConnection_on_execution_failure(bool async)
+        {
+            using (var context = CreateContext())
+            {
+                var connection = (TestSqlServerConnection)context.GetService<ISqlServerConnection>();
+
+                connection.OpenFailures.Enqueue(new bool?[] { true });
+
+                Assert.Equal(ConnectionState.Closed, context.Database.GetDbConnection().State);
+
+                if (async)
+                {
+                     await new TestSqlServerRetryingExecutionStrategy(context).ExecuteAsync(
+                        context,
+                        c => context.Database.OpenConnectionAsync());
+                }
+                else
+                {
+                     new TestSqlServerRetryingExecutionStrategy(context).Execute(
+                        context,
+                        c => context.Database.OpenConnection());
+                }
+
+                Assert.Equal(2, connection.OpenCount);
+
+                context.Database.CloseConnection();
+
+                Assert.Equal(ConnectionState.Closed, context.Database.GetDbConnection().State);
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Retries_BeginTransaction_on_execution_failure(bool async)
+        {
+            using (var context = CreateContext())
+            {
+                var connection = (TestSqlServerConnection)context.GetService<ISqlServerConnection>();
+
+                connection.OpenFailures.Enqueue(new bool?[] { true });
+
+                Assert.Equal(ConnectionState.Closed, context.Database.GetDbConnection().State);
+
+                if (async)
+                {
+                    var transaction = await new TestSqlServerRetryingExecutionStrategy(context).ExecuteAsync(
+                        context,
+                        c => context.Database.BeginTransactionAsync());
+
+                    transaction.Dispose();
+                }
+                else
+                {
+                    var transaction = new TestSqlServerRetryingExecutionStrategy(context).Execute(
+                        context,
+                        c => context.Database.BeginTransaction());
+
+                    transaction.Dispose();
+                }
+
+                Assert.Equal(2, connection.OpenCount);
+
+                Assert.Equal(ConnectionState.Closed, context.Database.GetDbConnection().State);
             }
         }
 
