@@ -147,6 +147,12 @@ namespace Microsoft.EntityFrameworkCore.Query
             => AssertQueryScalar(query, query, assertOrder);
 
         public virtual void AssertQueryScalar<TItem1>(
+            Func<IQueryable<TItem1>, IQueryable<double>> query,
+            bool assertOrder = false)
+            where TItem1 : class
+            => AssertQueryScalar(query, query, assertOrder);
+
+        public virtual void AssertQueryScalar<TItem1>(
             Func<IQueryable<TItem1>, IQueryable<int>> actualQuery,
             Func<IQueryable<TItem1>, IQueryable<int>> expectedQuery,
             bool assertOrder = false)
@@ -197,7 +203,7 @@ namespace Microsoft.EntityFrameworkCore.Query
             bool assertOrder = false)
             where TItem1 : class
             where TResult : struct
-            => Fixture.QueryAsserter.AssertQueryScalar(actualQuery, expectedQuery, assertOrder);
+            => Fixture.QueryAsserter.AssertQueryScalar(actualQuery, expectedQuery, assertOrder).Wait();
 
         public virtual void AssertQueryScalar<TItem1, TItem2>(
             Func<IQueryable<TItem1>, IQueryable<TItem2>, IQueryable<int>> query,

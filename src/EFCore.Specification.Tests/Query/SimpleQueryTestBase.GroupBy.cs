@@ -12,6 +12,641 @@ namespace Microsoft.EntityFrameworkCore.Query
 {
     public abstract partial class SimpleQueryTestBase<TFixture>
     {
+        #region GroupByPropertySelectAggregate
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Average()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID).Select(g => g.Average(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Count()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID).Select(g => g.Count()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_LongCount()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID).Select(g => g.LongCount()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Max()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID).Select(g => g.Max(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Min()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID).Select(g => g.Min(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Sum()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID).Select(g => g.Sum(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Sum_Min_Max_Avg()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID).Select(
+                    g =>
+                        new
+                        {
+                            Sum = g.Sum(o => o.OrderID),
+                            Min = g.Min(o => o.OrderID),
+                            Max = g.Max(o => o.OrderID),
+                            Avg = g.Average(o => o.OrderID)
+                        }),
+                e => e.Min + " " + e.Max);
+        }
+
+        #endregion
+
+        #region GroupByPropertySelectKeyAggregate
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Key_Average()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Average = g.Average(o => o.OrderID)
+                        }),
+                e => e.Key);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Key_Count()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Count = g.Count()
+                        }),
+                e => e.Key);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Key_LongCount()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Average = g.LongCount()
+                        }),
+                e => e.Key);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Key_Max()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Average = g.Max(o => o.OrderID)
+                        }),
+                e => e.Key);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Key_Min()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Average = g.Min(o => o.OrderID)
+                        }),
+                e => e.Key);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Key_Sum()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Average = g.Sum(o => o.OrderID)
+                        }),
+                e => e.Key);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Key_Sum_Min_Max_Avg()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Sum = g.Sum(o => o.OrderID),
+                            Min = g.Min(o => o.OrderID),
+                            Max = g.Max(o => o.OrderID),
+                            Avg = g.Average(o => o.OrderID)
+                        }),
+                e => e.Min + " " + e.Max);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_Select_Sum_Min_Key_Max_Avg()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID).Select(
+                    g =>
+                        new
+                        {
+                            Sum = g.Sum(o => o.OrderID),
+                            Min = g.Min(o => o.OrderID),
+                            g.Key,
+                            Max = g.Max(o => o.OrderID),
+                            Avg = g.Average(o => o.OrderID)
+                        }),
+                e => e.Min + " " + e.Max);
+        }
+
+        #endregion
+
+        #region GroupByCompositeSelectAggregate
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Average()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(g => g.Average(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Count()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(g => g.Count()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_LongCount()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(g => g.LongCount()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Max()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(g => g.Max(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Min()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(g => g.Min(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Sum()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(g => g.Sum(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Sum_Min_Max_Avg()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            Sum = g.Sum(o => o.OrderID),
+                            Min = g.Min(o => o.OrderID),
+                            Max = g.Max(o => o.OrderID),
+                            Avg = g.Average(o => o.OrderID)
+                        }),
+                e => e.Min + " " + e.Max);
+        }
+
+        #endregion
+
+        #region GroupByCompositeSelectKeyAggregate
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Key_Average()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Average = g.Average(o => o.OrderID)
+                        }),
+                e => e.Key.CustomerID + " " + e.Key.EmployeeID);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Key_Count()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Count = g.Count()
+                        }),
+                e => e.Key.CustomerID + " " + e.Key.EmployeeID);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Key_LongCount()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Average = g.LongCount()
+                        }),
+                e => e.Key.CustomerID + " " + e.Key.EmployeeID);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Key_Max()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Average = g.Max(o => o.OrderID)
+                        }),
+                e => e.Key.CustomerID + " " + e.Key.EmployeeID);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Key_Min()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Average = g.Min(o => o.OrderID)
+                        }),
+                e => e.Key.CustomerID + " " + e.Key.EmployeeID);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Key_Sum()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Average = g.Sum(o => o.OrderID)
+                        }),
+                e => e.Key.CustomerID + " " + e.Key.EmployeeID);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Key_Sum_Min_Max_Avg()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            g.Key,
+                            Sum = g.Sum(o => o.OrderID),
+                            Min = g.Min(o => o.OrderID),
+                            Max = g.Max(o => o.OrderID),
+                            Avg = g.Average(o => o.OrderID)
+                        }),
+                e => e.Min + " " + e.Max);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Sum_Min_Key_Max_Avg()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            Sum = g.Sum(o => o.OrderID),
+                            Min = g.Min(o => o.OrderID),
+                            g.Key,
+                            Max = g.Max(o => o.OrderID),
+                            Avg = g.Average(o => o.OrderID)
+                        }),
+                e => e.Min + " " + e.Max);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Sum_Min_Key_flattened_Max_Avg()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            Sum = g.Sum(o => o.OrderID),
+                            Min = g.Min(o => o.OrderID),
+                            g.Key.CustomerID,
+                            g.Key.EmployeeID,
+                            Max = g.Max(o => o.OrderID),
+                            Avg = g.Average(o => o.OrderID)
+                        }),
+                e => e.Min + " " + e.Max);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Composite_Select_Sum_Min_part_Key_flattened_Max_Avg()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => new { o.CustomerID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            Sum = g.Sum(o => o.OrderID),
+                            Min = g.Min(o => o.OrderID),
+                            g.Key.CustomerID,
+                            Max = g.Max(o => o.OrderID),
+                            Avg = g.Average(o => o.OrderID)
+                        }),
+                e => e.Min + " " + e.Max);
+        }
+
+        #endregion
+
+        #region GroupByPropertyElementSelectorAggregate
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_scalar_element_selector_Average()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => o.OrderID).Select(g => g.Average()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_scalar_element_selector_Count()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => o.OrderID).Select(g => g.Count()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_scalar_element_selector_LongCount()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => o.OrderID).Select(g => g.LongCount()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_scalar_element_selector_Max()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => o.OrderID).Select(g => g.Max()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_scalar_element_selector_Min()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => o.OrderID).Select(g => g.Min()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_scalar_element_selector_Sum()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => o.OrderID).Select(g => g.Sum()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_scalar_element_selector_Sum_Min_Max_Avg()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID, o => o.OrderID).Select(
+                    g =>
+                        new
+                        {
+                            Sum = g.Sum(),
+                            Min = g.Min(),
+                            Max = g.Max(),
+                            Avg = g.Average()
+                        }),
+                e => e.Min + " " + e.Max);
+        }
+
+        #endregion
+
+        #region GroupByPropertyAnonymousElementSelectorAggregate
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_anonymous_element_selector_Average()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => new { o.OrderID, o.EmployeeID }).Select(g => g.Average(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_anonymous_element_selector_Count()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => new { o.OrderID, o.EmployeeID }).Select(g => g.Count()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_anonymous_element_selector_LongCount()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => new { o.OrderID, o.EmployeeID }).Select(g => g.LongCount()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_anonymous_element_selector_Max()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => new { o.OrderID, o.EmployeeID }).Select(g => g.Max(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_anonymous_element_selector_Min()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => new { o.OrderID, o.EmployeeID }).Select(g => g.Min(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_anonymous_element_selector_Sum()
+        {
+            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID, o => new { o.OrderID, o.EmployeeID }).Select(g => g.Sum(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Property_anonymous_element_selector_Sum_Min_Max_Avg()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(o => o.CustomerID, o => new { o.OrderID, o.EmployeeID }).Select(
+                    g =>
+                        new
+                        {
+                            Sum = g.Sum(o => o.OrderID),
+                            Min = g.Min(o => o.EmployeeID),
+                            Max = g.Max(o => o.EmployeeID),
+                            Avg = g.Average(o => o.OrderID)
+                        }),
+                e => e.Sum + " " + e.Avg);
+        }
+
+        #endregion
+
+        #region GroupByAggregateVariations
+
+        [ConditionalFact]
+        public virtual void GroupBy_with_result_selector()
+        {
+            AssertQuery<Order>(
+                os => os.GroupBy(
+                    o => o.CustomerID, (k, g) =>
+                        new
+                        {
+                            Sum = g.Sum(o => o.OrderID),
+                            Min = g.Min(o => o.OrderID),
+                            Max = g.Max(o => o.OrderID),
+                            Avg = g.Average(o => o.OrderID)
+                        }),
+                e => e.Min + " " + e.Max);
+        }
+
+        [ConditionalFact]
+        public virtual void OrderBy_GroupBy()
+        {
+            AssertQueryScalar<Order>(
+                os =>
+                    os.OrderBy(o => o.OrderID)
+                        .GroupBy(o => o.CustomerID)
+                        .Select(g => g.Sum(o => o.OrderID)));
+        }
+
+        [ConditionalFact]
+        public virtual void Distinct_GroupBy()
+        {
+            AssertQuery<Order>(
+                os =>
+                    os.Distinct()
+                        .GroupBy(o => o.CustomerID)
+                        .Select(g => new { g.Key, c = g.Count() }),
+                e => e.Key);
+        }
+
+
+        [ConditionalFact(Skip = "Unable to bind group by. See Issue#6658")]
+        public virtual void Union_simple_groupby()
+        {
+            AssertQuery<Customer>(
+                cs => cs.Where(s => s.ContactTitle == "Owner")
+                    .Union(cs.Where(c => c.City == "México D.F."))
+                    .GroupBy(c => c.City)
+                    .Select(
+                        g => new
+                        {
+                            g.Key,
+                            Total = g.Count()
+                        }),
+                entryCount: 19);
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Sum_constant()
+        {
+            AssertQueryScalar<Order>(
+                os => os.GroupBy(o => o.CustomerID).Select(g => g.Sum(e => 1)));
+        }
+
+        #endregion
+
+        #region GroupByKeyBinding
+
+        [ConditionalFact]
+        public virtual void Distinct_GroupBy_OrderBy_key()
+        {
+            AssertQuery<Order>(
+                os =>
+                    os.Distinct()
+                        .GroupBy(o => o.CustomerID)
+                        .OrderBy(o => o.Key)
+                        .Select(g => new { g.Key, c = g.Count() }),
+                assertOrder: true);
+        }
+
+        [ConditionalFact]
+        public virtual void Select_nested_collection_with_groupby()
+        {
+            using (var context = CreateContext())
+            {
+                var expected = context.Customers
+                    .Include(c => c.Orders)
+                    .Where(c => c.CustomerID.StartsWith("A"))
+                    .ToList()
+                    .Select(
+                        c => c.Orders.Any()
+                            ? c.Orders.GroupBy(o => o.OrderID).Select(g => g.Key).ToArray()
+                            : new int[0]).ToList();
+
+                ClearLog();
+
+                var query = context.Customers
+                    .Where(c => c.CustomerID.StartsWith("A"))
+                    .Select(
+                        c => c.Orders.Any()
+                            ? c.Orders.GroupBy(o => o.OrderID).Select(g => g.Key).ToArray()
+                            : new int[0]);
+
+                var result = query.ToList();
+
+                Assert.Equal(expected.Count, result.Count);
+            }
+        }
+
+        [ConditionalFact]
+        public virtual void Select_GroupBy_All()
+        {
+            using (var context = CreateContext())
+            {
+                Assert.False(
+                    context
+                        .Set<Order>()
+                        .Select(
+                            o => new ProjectedType
+                            {
+                                Order = o.OrderID,
+                                Customer = o.CustomerID
+                            })
+                        .GroupBy(a => a.Customer)
+                        .All(a => a.Key == "ALFKI")
+                );
+            }
+        }
+
+        #endregion
+
+        #region GroupByWithoutAggregate
+
         [ConditionalFact]
         public virtual void GroupBy_anonymous()
         {
@@ -114,97 +749,6 @@ namespace Microsoft.EntityFrameworkCore.Query
         }
 
         [ConditionalFact]
-        public virtual void GroupBy_Sum()
-        {
-            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID).Select(g => g.Sum(o => o.OrderID)));
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_Count()
-        {
-            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID).Select(g => g.Count()));
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_LongCount()
-        {
-            AssertQueryScalar<Order>(os => os.GroupBy(o => o.CustomerID).Select(g => g.LongCount()));
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_Shadow()
-        {
-            AssertQuery<Employee>(
-                es =>
-                    es.Where(
-                            e => EF.Property<string>(e, "Title") == "Sales Representative"
-                                 && e.EmployeeID == 1)
-                        .GroupBy(e => EF.Property<string>(e, "Title"))
-                        .Select(g => EF.Property<string>(g.First(), "Title")));
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_Shadow2()
-        {
-            AssertQuery<Employee>(
-                es =>
-                    es.Where(
-                            e => EF.Property<string>(e, "Title") == "Sales Representative"
-                                 && e.EmployeeID == 1)
-                        .GroupBy(e => EF.Property<string>(e, "Title"))
-                        .Select(g => g.First()));
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_Shadow3()
-        {
-            AssertQuery<Employee>(
-                es =>
-                    es.Where(e => e.EmployeeID == 1)
-                        .GroupBy(e => e.EmployeeID)
-                        .Select(g => EF.Property<string>(g.First(), "Title")));
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_Sum_Min_Max_Avg()
-        {
-            AssertQuery<Order>(
-                os => os.GroupBy(o => o.CustomerID).Select(
-                    g =>
-                        new
-                        {
-                            Sum = g.Sum(o => o.OrderID),
-                            Min = g.Min(o => o.OrderID),
-                            Max = g.Max(o => o.OrderID),
-                            Avg = g.Average(o => o.OrderID)
-                        }),
-                e => e.Min + " " + e.Max);
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_with_result_selector()
-        {
-            AssertQuery<Order>(
-                os => os.GroupBy(
-                    o => o.CustomerID, (k, g) =>
-                        new
-                        {
-                            Sum = g.Sum(o => o.OrderID),
-                            Min = g.Min(o => o.OrderID),
-                            Max = g.Max(o => o.OrderID),
-                            Avg = g.Average(o => o.OrderID)
-                        }),
-                e => e.Min + " " + e.Max);
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_with_element_selector_sum()
-        {
-            AssertQueryScalar<Order>(
-                os => os.GroupBy(o => o.CustomerID, o => o.OrderID).Select(g => g.Sum()));
-        }
-
-        [ConditionalFact]
         public virtual void GroupBy_with_element_selector()
         {
             AssertQuery<Order>(
@@ -237,33 +781,6 @@ namespace Microsoft.EntityFrameworkCore.Query
         }
 
         [ConditionalFact]
-        public virtual void GroupBy_with_element_selector_sum_max()
-        {
-            AssertQuery<Order>(
-                os => os.GroupBy(o => o.CustomerID, o => o.OrderID)
-                    .Select(g => new { Sum = g.Sum(), Max = g.Max() }),
-                e => e.Sum + " " + e.Max);
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_with_anonymous_element()
-        {
-            AssertQueryScalar<Order>(
-                os =>
-                    os.GroupBy(o => o.CustomerID, o => new { o.OrderID })
-                        .Select(g => g.Sum(x => x.OrderID)));
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_with_two_part_key()
-        {
-            AssertQueryScalar<Order>(
-                os =>
-                    os.GroupBy(o => new { o.CustomerID, o.OrderDate })
-                        .Select(g => g.Sum(o => o.OrderID)));
-        }
-
-        [ConditionalFact]
         public virtual void GroupBy_DateTimeOffset_Property()
         {
             AssertQuery<Order>(
@@ -271,16 +788,6 @@ namespace Microsoft.EntityFrameworkCore.Query
                 e => ((IGrouping<int, Order>)e).Key,
                 elementAsserter: GroupingAsserter<int, Order>(o => o.OrderID),
                 entryCount: 830);
-        }
-
-        [ConditionalFact]
-        public virtual void OrderBy_GroupBy()
-        {
-            AssertQueryScalar<Order>(
-                os =>
-                    os.OrderBy(o => o.OrderID)
-                        .GroupBy(o => o.CustomerID)
-                        .Select(g => g.Sum(o => o.OrderID)));
         }
 
         [ConditionalFact]
@@ -322,12 +829,12 @@ namespace Microsoft.EntityFrameworkCore.Query
                 os => os.GroupBy(o => o.CustomerID).OrderBy(g => g.Key).Select(g => new { Foo = "Foo", Group = g }),
                 e => GroupingSorter<string, object>()(e.Group),
                 elementAsserter: (e, a) =>
-                    {
-                        Assert.Equal(e.Foo, a.Foo);
-                        IGrouping<string, Order> eGrouping = e.Group;
-                        IGrouping<string, Order> aGrouping = a.Group;
-                        Assert.Equal(eGrouping.OrderBy(p => p.OrderID), aGrouping.OrderBy(p => p.OrderID));
-                    },
+                {
+                    Assert.Equal(e.Foo, a.Foo);
+                    IGrouping<string, Order> eGrouping = e.Group;
+                    IGrouping<string, Order> aGrouping = a.Group;
+                    Assert.Equal(eGrouping.OrderBy(p => p.OrderID), aGrouping.OrderBy(p => p.OrderID));
+                },
                 entryCount: 830);
         }
 
@@ -363,24 +870,94 @@ namespace Microsoft.EntityFrameworkCore.Query
         }
 
         [ConditionalFact]
-        public virtual void Select_GroupBy_All()
+        public virtual void GroupBy_Distinct()
         {
-            using (var context = CreateContext())
-            {
-                Assert.False(
-                    context
-                        .Set<Order>()
-                        .Select(
-                            o => new ProjectedType
-                            {
-                                Order = o.OrderID,
-                                Customer = o.CustomerID
-                            })
-                        .GroupBy(a => a.Customer)
-                        .All(a => a.Key == "ALFKI")
-                );
-            }
+            AssertQuery<Order>(
+                os =>
+                    os.GroupBy(o => o.CustomerID).Distinct().Select(g => g.Key));
         }
+
+        [ConditionalFact]
+        public virtual void OrderBy_Skip_GroupBy()
+        {
+            AssertQuery<Order>(
+                os => os.OrderBy(o => o.OrderDate).Skip(800).GroupBy(o => o.CustomerID),
+                elementSorter: GroupingSorter<string, object>(),
+                elementAsserter: GroupingAsserter<string, dynamic>(d => d.OrderDate),
+                entryCount: 30);
+        }
+
+        [ConditionalFact]
+        public virtual void OrderBy_Take_GroupBy()
+        {
+            AssertQuery<Order>(
+                os => os.OrderBy(o => o.OrderDate).Take(50).GroupBy(o => o.CustomerID),
+                elementSorter: GroupingSorter<string, object>(),
+                elementAsserter: GroupingAsserter<string, dynamic>(d => d.OrderDate),
+                entryCount: 50);
+        }
+
+        [ConditionalFact]
+        public virtual void OrderBy_Skip_Take_GroupBy()
+        {
+            AssertQuery<Order>(
+                os => os.OrderBy(o => o.OrderDate).Skip(450).Take(50).GroupBy(o => o.CustomerID),
+                elementSorter: GroupingSorter<string, object>(),
+                elementAsserter: GroupingAsserter<string, dynamic>(d => d.OrderDate),
+                entryCount: 50);
+        }
+
+
+        [ConditionalFact]
+        public virtual void Select_Distinct_GroupBy()
+        {
+            AssertQuery<Order>(
+                os => os.Select(o => new { o.CustomerID, o.EmployeeID }).OrderBy(a => a.EmployeeID).Distinct().GroupBy(o => o.CustomerID),
+                elementSorter: GroupingSorter<string, object>(),
+                elementAsserter: GroupingAsserter<string, dynamic>(d => d.EmployeeID));
+        }
+
+        #endregion
+
+        #region GroupBySelectFirst
+
+        [ConditionalFact]
+        public virtual void GroupBy_Shadow()
+        {
+            AssertQuery<Employee>(
+                es =>
+                    es.Where(
+                            e => EF.Property<string>(e, "Title") == "Sales Representative"
+                                 && e.EmployeeID == 1)
+                        .GroupBy(e => EF.Property<string>(e, "Title"))
+                        .Select(g => EF.Property<string>(g.First(), "Title")));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Shadow2()
+        {
+            AssertQuery<Employee>(
+                es =>
+                    es.Where(
+                            e => EF.Property<string>(e, "Title") == "Sales Representative"
+                                 && e.EmployeeID == 1)
+                        .GroupBy(e => EF.Property<string>(e, "Title"))
+                        .Select(g => g.First()));
+        }
+
+        [ConditionalFact]
+        public virtual void GroupBy_Shadow3()
+        {
+            AssertQuery<Employee>(
+                es =>
+                    es.Where(e => e.EmployeeID == 1)
+                        .GroupBy(e => e.EmployeeID)
+                        .Select(g => EF.Property<string>(g.First(), "Title")));
+        }
+
+        #endregion
+
+        #region GroupByEntityType
 
         [ConditionalFact]
         public virtual void Select_GroupBy()
@@ -441,109 +1018,6 @@ namespace Microsoft.EntityFrameworkCore.Query
             }
         }
 
-        [ConditionalFact]
-        public virtual void Distinct_GroupBy()
-        {
-            AssertQuery<Order>(
-                os =>
-                    os.Distinct()
-                        .GroupBy(o => o.CustomerID)
-                        .OrderBy(g => g.Key)
-                        .Select(g => new { g.Key, c = g.Count() }),
-                assertOrder: true);
-        }
-
-        [ConditionalFact]
-        public virtual void GroupBy_Distinct()
-        {
-            AssertQuery<Order>(
-                os =>
-                    os.GroupBy(o => o.CustomerID).Distinct().Select(g => g.Key));
-        }
-
-        [ConditionalFact(Skip = "Unable to bind group by. See Issue#6658")]
-        public virtual void Union_simple_groupby()
-        {
-            AssertQuery<Customer>(
-                cs => cs.Where(s => s.ContactTitle == "Owner")
-                    .Union(cs.Where(c => c.City == "México D.F."))
-                    .GroupBy(c => c.City)
-                    .Select(
-                        g => new
-                        {
-                            g.Key,
-                            Total = g.Count()
-                        }),
-                entryCount: 19);
-        }
-
-        [ConditionalFact]
-        public virtual void Select_nested_collection_with_groupby()
-        {
-            using (var context = CreateContext())
-            {
-                var expected = context.Customers
-                    .Include(c => c.Orders)
-                    .Where(c => c.CustomerID.StartsWith("A"))
-                    .ToList()
-                    .Select(
-                        c => c.Orders.Any()
-                            ? c.Orders.GroupBy(o => o.OrderID).Select(g => g.Key).ToArray()
-                            : new int[0]).ToList();
-
-                ClearLog();
-
-                var query = context.Customers
-                    .Where(c => c.CustomerID.StartsWith("A"))
-                    .Select(
-                        c => c.Orders.Any()
-                            ? c.Orders.GroupBy(o => o.OrderID).Select(g => g.Key).ToArray()
-                            : new int[0]);
-
-                var result = query.ToList();
-
-                Assert.Equal(expected.Count, result.Count);
-            }
-        }
-
-        [ConditionalFact]
-        public virtual void OrderBy_Skip_GroupBy()
-        {
-            AssertQuery<Order>(
-                os => os.OrderBy(o => o.OrderDate).Skip(800).GroupBy(o => o.CustomerID),
-                elementSorter: GroupingSorter<string, object>(),
-                elementAsserter: GroupingAsserter<string, dynamic>(d => d.OrderDate),
-                entryCount: 30);
-        }
-
-        [ConditionalFact]
-        public virtual void OrderBy_Take_GroupBy()
-        {
-            AssertQuery<Order>(
-                os => os.OrderBy(o => o.OrderDate).Take(50).GroupBy(o => o.CustomerID),
-                elementSorter: GroupingSorter<string, object>(),
-                elementAsserter: GroupingAsserter<string, dynamic>(d => d.OrderDate),
-                entryCount: 50);
-        }
-
-        [ConditionalFact]
-        public virtual void OrderBy_Skip_Take_GroupBy()
-        {
-            AssertQuery<Order>(
-                os => os.OrderBy(o => o.OrderDate).Skip(450).Take(50).GroupBy(o => o.CustomerID),
-                elementSorter: GroupingSorter<string, object>(),
-                elementAsserter: GroupingAsserter<string, dynamic>(d => d.OrderDate),
-                entryCount: 50);
-        }
-
-
-        [ConditionalFact]
-        public virtual void Select_Distinct_GroupBy()
-        {
-            AssertQuery<Order>(
-                os => os.Select(o => new { o.CustomerID, o.EmployeeID }).OrderBy(a => a.EmployeeID).Distinct().GroupBy(o => o.CustomerID),
-                elementSorter: GroupingSorter<string, object>(),
-                elementAsserter: GroupingAsserter<string, dynamic>(d => d.EmployeeID));
-        }
+        #endregion
     }
 }
